@@ -1,0 +1,119 @@
+```gitignore
+# ============================================================
+# INTEL QUARTUS PRIME - GITIGNORE
+# Projetos FPGA com AHDL, Verilog e IPs Intel/Altera
+# ============================================================
+
+# ------------------------------------------------------------
+# 1. Bancos de dados gerados pelo Quartus
+# ------------------------------------------------------------
+db/
+incremental_db/
+greybox_tmp/
+datasheet/
+
+# ------------------------------------------------------------
+# 2. Resultados de compilacao
+# ------------------------------------------------------------
+output_files/
+
+# ------------------------------------------------------------
+# 3. Arquivos temporarios e relatorios
+# ------------------------------------------------------------
+*.rpt
+*.summary
+*.smsg
+*.log
+*.qws
+*.done
+*.qdf
+
+# ------------------------------------------------------------
+# 4. Arquivos de programacao gerados
+# ------------------------------------------------------------
+*.sof
+*.pof
+*.jic
+*.rbf
+*.rpd
+*.sbf
+*.ekp
+
+# ------------------------------------------------------------
+# 5. Arquivos intermediarios de compilacao
+# ------------------------------------------------------------
+*.map
+*.fit
+*.asm
+*.sta
+*.flow
+*.pin
+*.jdi
+
+# ------------------------------------------------------------
+# 6. Backups e arquivos temporarios
+# ------------------------------------------------------------
+*.bak
+*.tdf.bak
+*.v.bak
+*.sv.bak
+*.vhd.bak
+*.orig
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+
+# ------------------------------------------------------------
+# 7. Arquivos temporarios de ferramentas e editores
+# ------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ------------------------------------------------------------
+# 8. Arquivos temporarios de simulacao
+# ------------------------------------------------------------
+work/
+transcript
+vsim.wlf
+*.wlf
+*.vcd
+*.fst
+*.ghw
+
+# ------------------------------------------------------------
+# 9. Arquivos temporarios do sistema operacional
+# ------------------------------------------------------------
+.Trash-*/
+.directory
+*.lock
+
+# ============================================================
+# IMPORTANTE: NAO IGNORAR OS ARQUIVOS-FONTE
+# ============================================================
+
+# Arquivos que devem permanecer versionados:
+#
+# *.qpf    - Projeto Quartus
+# *.qsf    - Configuracoes do projeto
+# *.sdc    - Restricoes de temporizacao
+# *.tdf    - Codigo AHDL
+# *.inc    - Includes AHDL
+# *.v      - Codigo Verilog
+# *.sv     - Codigo SystemVerilog
+# *.vhd    - Codigo VHDL
+# *.vhdl   - Codigo VHDL
+# *.mif    - Inicializacao de memoria
+# *.hex    - Inicializacao de memoria
+# *.qip    - Configuracao de IP
+# *.ip     - Configuracao de IP
+# *.qsys   - Platform Designer
+# *.qsys2  - Platform Designer
+# *.qic    - Configuracao de IP
+#
+# Arquivos gerados por IPs devem ser avaliados individualmente.
+# ============================================================
+```
