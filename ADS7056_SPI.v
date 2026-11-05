@@ -2,179 +2,183 @@ module spi_adc_7056 (
 
     input  wire        clk,
     input  wire        rst,       // reset síncrono
+	 input  wire        mode,
+	 input wire         miso,      // PINO DE INPUT DO MESTRE
     output reg         sclk,
     output reg         ncs,
-    input wire         miso,      // PINO DE INPUT DO MESTRE
-    output reg [13:0]  data_reg
+    output reg [13:0]  data_reg,
+	 output wire new_sample_rdy_out
 
 );
 
-     reg miso_reg;
-     reg [6:0]  bit_cnt;
-     reg [1:0]  div_sclk;
-     reg [2:0]  delay;
-
-
+    reg new_sample_reg;
+	 assign new_sample_rdy_out = new_sample_reg;
+    reg [6:0]  bit_cnt;
+    reg [3:0]  delay;
+	 
     // Definição dos estados (Verilog clássico)
     localparam IDLE = 3'b000;
     localparam CHIP_SELECTED = 3'b001;
     localparam DELAY_CSCK = 3'b010;
-    localparam AWAIT_SCLK_FALL = 3'b011;
-    localparam AWAIT_SCLK_RISE = 3'b100;
-    localparam DELAY_CKCS = 3'b101;
-
-    reg [2:0] current__state;
+    localparam SCLK_RISE = 3'b011;
+    localparam SCLK_FALL = 3'b100;
+    localparam ACQ = 3'b101;
+	 
+	 //Definiçao dos modos de operaçao do ADS7056
+	 localparam OFFCALL_UP = 2'd1;
+	 localparam CNV = 2'd2;
+	 localparam OFFCAL = 2'd3;
+	 
+    reg [2:0] current_spi_state;
 
     always @(posedge clk) begin
 
-    miso_reg <= miso;
+    
     if (rst) begin
 
       sclk <= 1'b1;
       ncs <= 1'b1;
 		
-	   div_sclk <= 2'd0;
-	   delay <= 3'd0;
+	   delay <= 4'd0;
 	   bit_cnt <= 7'd0;
-	   
-
-	   current_mosi_state <= IDLE;
+	   new_sample_reg <= 1'b0;
+		
+	   current_spi_state <= IDLE;
 
     end
 
-         else begin
+    else begin
 
-         case (current_mosi_state)
+	 new_sample_reg <= 1'b0;
+	 
+    case (current_spi_state)
 
-        NO_MOSI_DATA:
+		  IDLE:
+		  
+        begin
 
-                           begin
+		  if (mode == OFFCALL_UP) begin							
+		  
+		      bit_cnt <= 7'd24;
+				current_spi_state <= CHIP_SELECTED;
+		  
+		  end
+		  
+		  else if (mode == CNV) begin							
+		  
+		      bit_cnt <= 7'd18;
+				current_spi_state <= CHIP_SELECTED;
+		  
+		  end
+		  
+		  else if (mode == OFFCAL) begin							
+		  
+		      bit_cnt <= 7'd64;
+				current_spi_state <= CHIP_SELECTED;
+		  
+		  end
+		  
+        end
 
-									
-		                               if (config_reg == 16'h0000) begin
-                                             current_mosi_state <= NO_MOSI_DATA;
-                end
-                                         else begin
-                          current_mosi_state <= CHIP_SELECTED;
-                                                  ncs <= 1'b0;          
-                end
-                                         
-                                end
+        CHIP_SELECTED:
 
-                  CHIP_SELECTED:
+        begin
 
-                           begin
+            ncs <= 1'b0;
+            current_spi_state <= DELAY_CSCK;				
 
-                               current_mosi_state <= DELAY_CSSC_MOSI;
-                                         shift_reg <= config_reg;
-                                         old_config_reg <= config_reg;
+        end
 
-                      end
+		  //Setup time
+        DELAY_CSCK:
 
-                        DELAY_CSSC_MOSI:
-
-                           begin
-
-                               delay  <= delay + 5'd1;
-                                         //200 ns to satisfy delay between nCS falling and first SCLK rising
-                                         if (delay == 5'd20) begin
-                                             delay <= 5'd0;
-                                                  current_mosi_state <= AWAIT_SCLK_FALL_MOSI;
-                                                  mosi <= shift_reg[15];
-                                                  sclk <= 1'b1;
-                                         end   
-                               else begin
-                                             current_mosi_state <= DELAY_CSSC_MOSI;
-
-                                         end   
-                      end
+        begin
+            
+				delay <= delay + 4'd1;
+			   if (delay == 4'd1) begin
+				    sclk <= 1'b0;
+				    delay <= 4'd0;
+					 current_spi_state <= SCLK_RISE;
+			   end	
+                              
+        end
 								
-								                AWAIT_SCLK_FALL_MOSI:
+		  SCLK_RISE:
 
-                          begin
+        begin
 
-                                        div_sclk  <= div_sclk + 6'd1;
-                                        //await 0,5 us to low sclk based on fsclk = 1 MHz
-                                        if (div_sclk == 6'd49) begin
+				
+	
+			   if (bit_cnt > 7'd0) begin
+						  
+					 if ((mode == CNV) && (bit_cnt < 7'd17) && (bit_cnt > 7'd2)) begin
+					 
+					     data_reg[bit_cnt - 3] <= miso;
+						  
+					 end
+					 
+					 else if ((mode == OFFCAL) && (bit_cnt < 7'd63) && (bit_cnt > 7'd48)) begin
+					 
+					     data_reg[bit_cnt - 49] <= miso;
+						  
+					 end
+					 
+					 sclk <= 1'b1;
+					 current_spi_state <= SCLK_FALL;
+					 
+						  
+				end
+	
+				else if (bit_cnt == 7'd0) begin
+				 
+					 current_spi_state <= ACQ;
+						  
+				end
+											 
+	     end
+		  
+		  SCLK_FALL:
 
-                                            div_sclk <= 6'd0;
-                                                 sclk <= 1'b0;
+        begin
 
-                                                 if (bit_cnt > 5'd0) begin
-                                                     shift_reg <= shift_reg << 1;
-                                                     bit_cnt <= bit_cnt - 1;
-                                                          current_mosi_state <= AWAIT_SCLK_RISE_MOSI;
-                                                 end
-
-                                                 else if (bit_cnt == 5'd0) begin
-                                                     current_mosi_state <= DELAY_SCCS_MOSI;
-                                                          bit_cnt <= 5'd15;
-                                                 end
-                                                  
-                                        end
-
-                                        else begin
-                                            current_mosi_state <= AWAIT_SCLK_FALL_MOSI;
-                                        end
-                                        
-                      end
-
-							   AWAIT_SCLK_RISE_MOSI:
-
-                          begin
-
-                                        div_sclk  <= div_sclk + 6'd1;
-                                        //await 0,5 us to low sclk based on fsclk = 1 MHz
-                                        if (div_sclk == 6'd49) begin
-                                            sclk <= 1'b1;
-                                                 div_sclk <= 6'd0;
-                                                 mosi <= shift_reg[15];
-                                                 current_mosi_state <= AWAIT_SCLK_FALL_MOSI;
-                                        end
-                                        else begin
-                                            current_mosi_state <= AWAIT_SCLK_RISE_MOSI;
-                                        end
-                                        
-                     end
-
+				sclk <= 1'b0;
+			   bit_cnt <= bit_cnt - 7'd1;
+				current_spi_state <= SCLK_RISE;
+	 
+	     end
+	
 							
-							              DELAY_SCCS_MOSI:
+			ACQ:
 
-                         begin
+         begin
 
-                             delay  <= delay + 5'd1;
-                                  //200 ns to satisfy delay between SCLK falling and nCS rising
-                                  if (delay == 5'd20) begin
-                                           delay <= 5'd0;
-                                                ncs <= 1'b1;
-                                                mosi <= 1'b0;
-                                                miso_enable <= 1'b1;
-                                                current_mosi_state <= IDLE_MOSI;
+			    delay <= delay + 4'd1;
+				 if(delay == 4'd1) begin
+				 
+				     sclk <= 1'b1;
+				 
+				 end
+				 //Hold time
+				 else if(delay == 4'd2) begin
+				     
+					  ncs <= 1'b1;
+					  
+				 end
+				 
+				 else if(delay == 4'd11) begin
+				 
+				     new_sample_reg <= 1'b1;
+					  
+					  current_spi_state <= IDLE;
+					  
+				 end
+			
+         end         
 
-                                  end
-
-                             else begin
-
-                                           current_mosi_state <= DELAY_SCCS_MOSI;
-
-                                  end   
-                    end         
-
-                IDLE_MOSI:
-
-                         begin
-
-                             if (config_reg == old_config_reg) begin
-                                      current_mosi_state <= IDLE_MOSI;
-
-                                  end
-                                  else begin
-                                           current_mosi_state <= NO_MOSI_DATA;
-                                                
-                                  end
-
-                                        
-                      end
+      endcase
+		end
+		end
+		endmodule
 
 									
 			
