@@ -47,7 +47,7 @@ spi_adc_7056 u_spi_adc_7056 (
     if (rst) begin
 
 		  current_driver_state <= IDLE;
-		  mode_ads7056 <= 2'd0;
+		  mode_ads7056 <= NO_OP;
 	 
     end
 
@@ -60,8 +60,10 @@ spi_adc_7056 u_spi_adc_7056 (
     begin
         
 		  if (rst == 1'b0) begin
-	 	      current_driver_state <= CAL_ON_UP_STATE;
-		      mode_ads7056 <= OFFCALL_UP;
+		      current_driver_state <= CNV_STATE;
+		      mode_ads7056 <= CNV;
+	 	      //current_driver_state <= CAL_ON_UP_STATE;
+		      //mode_ads7056 <= OFFCALL_UP;
 		  end
 		  
 	 end
@@ -83,10 +85,10 @@ spi_adc_7056 u_spi_adc_7056 (
     begin
 
 	 	  if (new_sample_rdy_out == 1'b1) begin
-	 	      current_driver_state <= CAL_STATE;
+	 	      current_driver_state <= CNV_STATE;
 		  end
 		  
-		  mode_ads7056 <= OFFCAL;
+		  //mode_ads7056 <= OFFCAL;
 		  
 	 end
 		  
@@ -95,10 +97,10 @@ spi_adc_7056 u_spi_adc_7056 (
     begin
 
 	 	  if (new_sample_rdy_out == 1'b1) begin
-	 	      
+	 	      current_driver_state <= CNV_STATE;
 		  end
 		  
-		  mode_ads7056 <= NO_OP;
+		  mode_ads7056 <= CNV;
 		  
 	 end
 	

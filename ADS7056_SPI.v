@@ -2,7 +2,7 @@ module spi_adc_7056 (
 
     input  wire        clk,
     input  wire        rst,       // reset síncrono
-	 input  wire        mode,
+	 input  wire [1:0]  mode,
 	 input wire         miso,      // PINO DE INPUT DO MESTRE
     output reg         sclk,
     output reg         ncs,
@@ -10,6 +10,18 @@ module spi_adc_7056 (
 	 output wire new_sample_rdy_out
 
 );
+
+    wire clk_120mhz;
+    wire pll_locked;
+
+    pll_ip u_pll_ip (
+
+    .inclk0 (clk),
+    .areset (1'b0),
+    .c0     (clk_120mhz),
+    .locked (pll_locked)
+
+); 
 
     reg new_sample_reg;
 	 assign new_sample_rdy_out = new_sample_reg;
@@ -31,10 +43,11 @@ module spi_adc_7056 (
 	 
     reg [2:0] current_spi_state;
 
-    always @(posedge clk) begin
+	 always @(posedge clk_120mhz) begin
+    //always @(posedge clk) begin
 
     
-    if (rst) begin
+    if (rst | ~pll_locked) begin
 
       sclk <= 1'b1;
       ncs <= 1'b1;
