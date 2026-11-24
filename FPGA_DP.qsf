@@ -54,13 +54,18 @@ set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name FLOW_ENABLE_POWER_ANALYZER ON
 set_global_assignment -name POWER_DEFAULT_INPUT_IO_TOGGLE_RATE "12.5 %"
+set_location_assignment PIN_26 -to clk
+set_location_assignment PIN_10 -to rst
+set_location_assignment PIN_44 -to ncs
+set_location_assignment PIN_32 -to sclk
+set_location_assignment PIN_39 -to rdy
+set_global_assignment -name VERILOG_FILE crc16.v
+set_global_assignment -name VERILOG_FILE uart_rx.v
+set_global_assignment -name VERILOG_FILE uart_tx.v
+set_global_assignment -name VERILOG_FILE uart_tx_8.v
 set_global_assignment -name VERILOG_FILE ADS7056_DRIVER.v
 set_global_assignment -name VERILOG_FILE ADS7056_SPI.v
 set_global_assignment -name BDF_FILE FPGA_DP.bdf
-set_location_assignment PIN_26 -to clk
-set_location_assignment PIN_10 -to rst
-set_location_assignment PIN_38 -to ncs
-set_location_assignment PIN_32 -to sclk
-set_location_assignment PIN_39 -to rdy
 set_global_assignment -name QIP_FILE pll_ip.qip
+set_global_assignment -name VERILOG_FILE reg_set.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
