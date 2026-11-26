@@ -1,0 +1,63 @@
+PARAMETERS
+(
+    N_BITS = 18
+);
+
+subdesign RAM_interface(
+	 clk: input;
+	 sreset: input;
+	 addr_clr: input;
+	 addr_inc_read: input;
+	 addr_inc_write: input;
+	 data_in[15..0]: input;
+	 we_n: input;
+	 oe_n: input;
+	 cs_n: input;
+	 data_bus_out: input;
+    	
+	 write_enable: input;
+	
+	 ram_address[N_BITS-1..0]: output;
+	 ram_data_bus[15..0]: bidir;
+	 ram_we_n: output;
+	 ram_cs_n: output;
+	 ram_oe_n: output;
+
+	 data_out[15..0]: output;
+)
+variable
+	address_counter_read[N_BITS-1..0]: dffe;
+	address_counter_write[N_BITS-1..0]: dffe;
+	tsn[15..0]: TRI_STATE_NODE;
+	buffer[15..0]: TRI;
+	write, read: node;
+	driver[15..0]: lcell;
+begin
+	address_counter_read[].clk = clk;
+	address_counter_read[].d = address_counter_read[].q+1;
+	address_counter_read[].clrn = !(addr_clr or sreset);
+	address_counter_read[].ena = addr_inc_read;
+	
+	address_counter_write[].clk = clk;
+	address_counter_write[].d = address_counter_write[].q+1;
+	address_counter_write[].clrn = !(addr_clr or sreset);
+	address_counter_write[].ena = addr_inc_write;
+
+	if data_bus_out then
+		ram_address[] = address_counter_write[].q;
+	else
+		ram_address[] = address_counter_read[].q;
+	end if;
+	
+	buffer[].in = data_in[];
+	buffer[].oe = data_bus_out;
+	tsn[] = buffer[].out;
+	ram_data_bus[] = tsn[];
+	
+	ram_we_n = we_n or !data_bus_out or sreset or !write_enable;
+	ram_cs_n = cs_n or sreset;
+	ram_oe_n = oe_n or data_bus_out or sreset;
+	
+	driver[].in = tsn[];
+	data_out[] = driver[].out;
+end;
